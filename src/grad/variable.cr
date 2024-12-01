@@ -62,7 +62,7 @@ class Num::Grad::Variable(T)
   # f = a + b # => [5.0]
   # f.backprop
   # ```
-  operator_op :+, Num::Grad::AddGate(T)
+  operator_op :+, Num::Grad::AddGate(T), self, other
 
   # Subtracts a variable from another variable and stores
   # the derivative of the operation in the computational
@@ -83,7 +83,7 @@ class Num::Grad::Variable(T)
   # f = a - b # => [-1.0]
   # f.backprop
   # ```
-  operator_op :-, Num::Grad::SubtractGate(T)
+  operator_op :-, Num::Grad::SubtractGate(T), self, other
 
   # Multiples a variable to another variable and stores
   # the derivative of the operation in the computational

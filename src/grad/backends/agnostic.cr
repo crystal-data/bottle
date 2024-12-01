@@ -24,14 +24,38 @@
 module Num::Grad
   extend self
 
-  # :nodoc:
-  def add_backward(gradient : U) : Array(U) forall U
-    [gradient, gradient]
+  #
+  # This returns the appropriate backward gradient processing for
+  # addition and subtraction based on the
+  # size and rank of the two variables
+  #
+  private def sum_grad_backward(gradient : U, a : U, b : U) : Array(U) forall U
+    if a.rank != b.rank
+      # broadcast along an axis, so sum dwn by axis
+      swap = a.rank > b.rank
+      gless = gradient
+      (b.rank - a.rank).abs.times do
+        gless = gless.sum(0)
+      end
+      if a.size == 1 || b.size == 1
+        gless = gless.sum(0)
+      end
+      swap ? [gradient, gless] : [gless, gradient]
+    else
+      [gradient, gradient]
+    end
   end
 
   # :nodoc:
-  def subtract_backward(gradient : U) : Array(U) forall U
-    [gradient, gradient * -1]
+  def add_backward(gradient : U, a : Variable(U), b : Variable(U)) : Array(U) forall U
+    sum_grad_backward(gradient, a.value, b.value)
+  end
+
+  # :nodoc:
+  def subtract_backward(gradient : U, a : Variable(U), b : Variable(U)) : Array(U) forall U
+    r = sum_grad_backward(gradient, a.value, b.value)
+    r[1] = -r[1]
+    r
   end
 
   # :nodoc:

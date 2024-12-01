@@ -82,6 +82,114 @@ describe Num::Grad do
     end
   {% end %}
 
+  it "backpropogates for addition with broadcast" do
+    ctx = Num::Grad::Context(Float32Tensor).new
+
+    a = ctx.variable([
+      [1_f32, 2_f32, 3_f32, 4_f32],
+      [5_f32, 6_f32, 7_f32, 8_f32],
+      [9_f32, 10_f32, 11_f32, 12_f32],
+      [13_f32, 14_f32, 15_f32, 16_f32],
+    ])
+    b = ctx.variable([
+      1_f32, 1_f32, 1_f32, 1_f32,
+    ])
+
+    result = a + b
+    result.backprop
+
+    expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+    expected_b = [4_f32, 4_f32, 4_f32, 4_f32].to_tensor
+
+    Num::Testing.tensor_equal(a.grad, expected_a).should be_true
+    Num::Testing.tensor_equal(b.grad, expected_b).should be_true
+  end
+
+  {% if flag?(:opencl) %}
+    it "backpropogates for addition with broadcast opencl", tags: "opencl" do
+      ctx = Num::Grad::Context(Float32ClTensor).new
+
+      a = ctx.variable([
+        [1_f32, 2_f32, 3_f32, 4_f32],
+        [5_f32, 6_f32, 7_f32, 8_f32],
+        [9_f32, 10_f32, 11_f32, 12_f32],
+        [13_f32, 14_f32, 15_f32, 16_f32],
+      ].to_tensor(OCL))
+      b = ctx.variable([
+        1_f32, 1_f32, 1_f32, 1_f32,
+      ].to_tensor(OCL))
+
+      result = a + b
+      result.backprop
+
+      expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+      expected_b = [4_f32, 4_f32, 4_f32, 4_f32].to_tensor
+
+      Num::Testing.tensor_equal(a.grad.cpu, expected_a).should be_true
+      Num::Testing.tensor_equal(b.grad.cpu, expected_b).should be_true
+    end
+  {% end %}
+
+  it "backpropogates for addition with scalar broadcast" do
+    ctx = Num::Grad::Context(Float32Tensor).new
+
+    a = ctx.variable([
+      [1_f32, 2_f32, 3_f32, 4_f32],
+      [5_f32, 6_f32, 7_f32, 8_f32],
+      [9_f32, 10_f32, 11_f32, 12_f32],
+      [13_f32, 14_f32, 15_f32, 16_f32],
+    ])
+    b = ctx.variable([
+      1_f32,
+    ])
+
+    result = a + b
+    result.backprop
+
+    expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+    expected_b = [16_f32].to_tensor
+
+    Num::Testing.tensor_equal(a.grad, expected_a).should be_true
+    Num::Testing.tensor_equal(b.grad, expected_b).should be_true
+  end
+
+  {% if flag?(:opencl) %}
+    it "backpropogates for addition with scalar broadcast opencl", tags: "opencl" do
+      ctx = Num::Grad::Context(Float32ClTensor).new
+
+      a = ctx.variable([
+        [1_f32, 2_f32, 3_f32, 4_f32],
+        [5_f32, 6_f32, 7_f32, 8_f32],
+        [9_f32, 10_f32, 11_f32, 12_f32],
+        [13_f32, 14_f32, 15_f32, 16_f32],
+      ].to_tensor(OCL))
+      b = ctx.variable([
+        1_f32,
+      ].to_tensor(OCL))
+
+      result = a + b
+      result.backprop
+
+      expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+      expected_b = [16_f32].to_tensor
+
+      Num::Testing.tensor_equal(a.grad.cpu, expected_a).should be_true
+      Num::Testing.tensor_equal(b.grad.cpu, expected_b).should be_true
+    end
+  {% end %}
+
   it "backpropogates for subtraction" do
     ctx = Num::Grad::Context(Float32Tensor).new
 
@@ -109,6 +217,114 @@ describe Num::Grad do
       expected = [1_f32].to_tensor
 
       Num::Testing.tensor_equal(a.grad.cpu, expected).should be_true
+    end
+  {% end %}
+
+  it "backpropogates for subtraction with broadcast" do
+    ctx = Num::Grad::Context(Float32Tensor).new
+
+    a = ctx.variable([
+      [1_f32, 2_f32, 3_f32, 4_f32],
+      [5_f32, 6_f32, 7_f32, 8_f32],
+      [9_f32, 10_f32, 11_f32, 12_f32],
+      [13_f32, 14_f32, 15_f32, 16_f32],
+    ])
+    b = ctx.variable([
+      1_f32, 1_f32, 1_f32, 1_f32,
+    ])
+
+    result = a - b
+    result.backprop
+
+    expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+    expected_b = [-4_f32, -4_f32, -4_f32, -4_f32].to_tensor
+
+    Num::Testing.tensor_equal(a.grad, expected_a).should be_true
+    Num::Testing.tensor_equal(b.grad, expected_b).should be_true
+  end
+
+  {% if flag?(:opencl) %}
+    it "backpropogates for subtraction with broadcast opencl", tags: "opencl" do
+      ctx = Num::Grad::Context(Float32ClTensor).new
+
+      a = ctx.variable([
+        [1_f32, 2_f32, 3_f32, 4_f32],
+        [5_f32, 6_f32, 7_f32, 8_f32],
+        [9_f32, 10_f32, 11_f32, 12_f32],
+        [13_f32, 14_f32, 15_f32, 16_f32],
+      ].to_tensor(OCL))
+      b = ctx.variable([
+        1_f32, 1_f32, 1_f32, 1_f32,
+      ].to_tensor(OCL))
+
+      result = a - b
+      result.backprop
+
+      expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+      expected_b = [-4_f32, -4_f32, -4_f32, -4_f32].to_tensor
+
+      Num::Testing.tensor_equal(a.grad.cpu, expected_a).should be_true
+      Num::Testing.tensor_equal(b.grad.cpu, expected_b).should be_true
+    end
+  {% end %}
+
+  it "backpropogates for subtraction with scalar broadcast" do
+    ctx = Num::Grad::Context(Float32Tensor).new
+
+    a = ctx.variable([
+      [1_f32, 2_f32, 3_f32, 4_f32],
+      [5_f32, 6_f32, 7_f32, 8_f32],
+      [9_f32, 10_f32, 11_f32, 12_f32],
+      [13_f32, 14_f32, 15_f32, 16_f32],
+    ])
+    b = ctx.variable([
+      1_f32,
+    ])
+
+    result = a - b
+    result.backprop
+
+    expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32],
+                  [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+    expected_b = [-16_f32].to_tensor
+
+    Num::Testing.tensor_equal(a.grad, expected_a).should be_true
+    Num::Testing.tensor_equal(b.grad, expected_b).should be_true
+  end
+
+  {% if flag?(:opencl) %}
+    it "backpropogates for subtraction with scalar broadcast opencl", tags: "opencl" do
+      ctx = Num::Grad::Context(Float32ClTensor).new
+
+      a = ctx.variable([
+        [1_f32, 2_f32, 3_f32, 4_f32],
+        [5_f32, 6_f32, 7_f32, 8_f32],
+        [9_f32, 10_f32, 11_f32, 12_f32],
+        [13_f32, 14_f32, 15_f32, 16_f32],
+      ].to_tensor(OCL))
+      b = ctx.variable([
+        1_f32,
+      ].to_tensor(OCL))
+
+      result = a - b
+      result.backprop
+
+      expected_a = [[1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32],
+                    [1_f32, 1_f32, 1_f32, 1_f32]].to_tensor
+      expected_b = [-16_f32].to_tensor
+
+      Num::Testing.tensor_equal(a.grad.cpu, expected_a).should be_true
+      Num::Testing.tensor_equal(b.grad.cpu, expected_b).should be_true
     end
   {% end %}
 

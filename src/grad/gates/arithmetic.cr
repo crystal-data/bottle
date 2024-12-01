@@ -22,53 +22,16 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # :nodoc:
-class Num::Grad::AddGate(T) < Num::Grad::Gate(T)
-  # :nodoc:
-  def backward(payload : Num::Grad::Payload(T)) : Array(T)
-    Num::Grad.add_backward(payload.variable.grad)
-  end
-
-  # :nodoc:
-  def cache(result : Num::Grad::Variable(T), *args)
-    a, b = args
-
-    result.grad = T.zeros_like(result.value)
-    result.requires_grad = true
-
-    Num::Grad.register("Add", self, result, a, b)
-  end
-end
-
-# :nodoc:
-class Num::Grad::SubtractGate(T) < Num::Grad::Gate(T)
-  # :nodoc:
-  def backward(payload : Num::Grad::Payload(T)) : Array(T)
-    Num::Grad.subtract_backward(payload.variable.grad)
-  end
-
-  # :nodoc:
-  def cache(result : Num::Grad::Variable(T), *args)
-    a, b = args
-    result.grad = T.zeros_like(result.value)
-    result.requires_grad = true
-
-    Num::Grad.register("Sub", self, result, a, b)
-  end
-end
-
-# :nodoc:
-class Num::Grad::TwoOpGate(T) < Num::Grad::Gate(T)
+abstract class Num::Grad::TwoOpGate(T) < Num::Grad::Gate(T)
   getter a : Num::Grad::Variable(T)
   getter b : Num::Grad::Variable(T)
   @@name = "TwoOp"
 
   # :nodoc:
-  def initialize(@a : Num::Grad::Variable(T), @b : Num::Grad::Variable(T))
+  def initialize(@a, @b)
   end
 
-  def backward(payload : Num::Grad::Payload(T)) : Array(T)
-    [] of T
-  end
+  abstract def backward(payload : Num::Grad::Payload(T)) : Array(T)
 
   # :nodoc:
   def cache(result : Num::Grad::Variable(T), *args)
@@ -77,6 +40,26 @@ class Num::Grad::TwoOpGate(T) < Num::Grad::Gate(T)
     result.requires_grad = true
 
     Num::Grad.register(@@name, self, result, a, b)
+  end
+end
+
+# :nodoc:
+class Num::Grad::AddGate(T) < Num::Grad::TwoOpGate(T)
+  @@name = "Add"
+
+  # :nodoc:
+  def backward(payload : Num::Grad::Payload(T)) : Array(T)
+    Num::Grad.add_backward(payload.variable.grad, a, b)
+  end
+end
+
+# :nodoc:
+class Num::Grad::SubtractGate(T) < Num::Grad::TwoOpGate(T)
+  @@name = "Sub"
+
+  # :nodoc:
+  def backward(payload : Num::Grad::Payload(T)) : Array(T)
+    Num::Grad.subtract_backward(payload.variable.grad, a, b)
   end
 end
 
